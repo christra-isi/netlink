@@ -526,7 +526,17 @@ type Vxlan struct {
 	Port           int
 	PortLow        int
 	PortHigh       int
+	DF             VxlanDF
 }
+
+// VxlanDF controls the Don't Fragment flag on outer IPv4 packets.
+type VxlanDF uint8
+
+const (
+	VxlanDFUnset VxlanDF = iota
+	VxlanDFSet
+	VxlanDFInherit
+)
 
 func (vxlan *Vxlan) Attrs() *LinkAttrs {
 	return &vxlan.LinkAttrs

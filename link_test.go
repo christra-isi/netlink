@@ -635,6 +635,9 @@ func compareVxlan(t *testing.T, expected, actual *Vxlan) {
 	if actual.UDP6ZeroCSumRx != expected.UDP6ZeroCSumRx {
 		t.Fatal("Vxlan.UDP6ZeroCSumRx doesn't match")
 	}
+	if actual.DF != expected.DF {
+		t.Fatal("Vxlan.DF doesn't match")
+	}
 	if expected.NoAge {
 		if !actual.NoAge {
 			t.Fatal("Vxlan.NoAge doesn't match")
@@ -655,6 +658,34 @@ func compareVxlan(t *testing.T, expected, actual *Vxlan) {
 		if actual.PortHigh != expected.PortHigh {
 			t.Fatal("Vxlan.PortHigh doesn't match")
 		}
+	}
+}
+
+func TestVxlanDFRoundTrip(t *testing.T) {
+	for _, df := range []VxlanDF{VxlanDFUnset, VxlanDFSet, VxlanDFInherit} {
+		t.Run(fmt.Sprint(df), func(t *testing.T) {
+			linkInfo := nl.NewRtAttr(unix.IFLA_LINKINFO, nil)
+			addVxlanAttrs(&Vxlan{DF: df}, linkInfo)
+
+			linkInfoAttrs, err := nl.ParseRouteAttr(linkInfo.Serialize()[unix.SizeofRtAttr:])
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(linkInfoAttrs) != 1 || linkInfoAttrs[0].Attr.Type != nl.IFLA_INFO_DATA {
+				t.Fatalf("unexpected VXLAN link info attributes: %+v", linkInfoAttrs)
+			}
+
+			data, err := nl.ParseRouteAttr(linkInfoAttrs[0].Value)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			actual := &Vxlan{}
+			parseVxlanData(actual, data)
+			if actual.DF != df {
+				t.Fatalf("Vxlan.DF is %d, want %d", actual.DF, df)
+			}
+		})
 	}
 }
 

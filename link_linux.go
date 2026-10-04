@@ -1353,6 +1353,8 @@ func addVxlanAttrs(vxlan *Vxlan, linkInfo *nl.RtAttr) {
 
 		data.AddRtAttr(nl.IFLA_VXLAN_PORT_RANGE, buf.Bytes())
 	}
+
+	data.AddRtAttr(nl.IFLA_VXLAN_DF, nl.Uint8Attr(uint8(vxlan.DF)))
 }
 
 func addBondAttrs(bond *Bond, linkInfo *nl.RtAttr) {
@@ -3116,6 +3118,8 @@ func parseVxlanData(link Link, data []syscall.NetlinkRouteAttr) {
 				vxlan.PortLow = int(pr.Lo)
 				vxlan.PortHigh = int(pr.Hi)
 			}
+		case nl.IFLA_VXLAN_DF:
+			vxlan.DF = VxlanDF(datum.Value[0])
 		}
 	}
 }
